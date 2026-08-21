@@ -38,19 +38,41 @@
       margin-bottom: 10px;
       font-size: 1rem;
     }
-    .relay-card button {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 10px;
-      color: white;
-      background-color: blue;
-      cursor: pointer;
-      font-size: 16px;
-	  width: 90%;
-      transition: opacity 0.3s ease;
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 32px;
     }
-    .relay-card button:hover {
-      opacity: 0.8;
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc;
+      border-radius: 32px;
+      transition: 0.3s;
+    }
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 24px;
+      width: 24px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+    .toggle-switch input:checked + .toggle-slider {
+      background-color: green;
+    }
+    .toggle-switch input:checked + .toggle-slider:before {
+      transform: translateX(28px);
     }
     #allOffBtn, #logoutBtn {
       max-width: 300px;
@@ -159,27 +181,48 @@
   <div id="dashboard">
     <div class="relay-container">
       <div class="relay-card">
-        <h2>Relay 1</h2>
+        <h2>Fan 1</h2>
         <p>Status: <span id="status1">Loading...</span></p>
-        <button id="btn1">Toggle</button>
+        <label class="toggle-switch">
+          <input type="checkbox" id="btn1">
+          <span class="toggle-slider"></span>
+        </label>
       </div>
 
       <div class="relay-card">
-        <h2>Relay 2</h2>
+        <h2>Fan 2</h2>
         <p>Status: <span id="status2">Loading...</span></p>
-        <button id="btn2">Toggle</button>
+        <label class="toggle-switch">
+          <input type="checkbox" id="btn2">
+          <span class="toggle-slider"></span>
+        </label>
       </div>
 
       <div class="relay-card">
-        <h2>Relay 3</h2>
+        <h2>LED 1</h2>
         <p>Status: <span id="status3">Loading...</span></p>
-        <button id="btn3">Toggle</button>
+        <label class="toggle-switch">
+          <input type="checkbox" id="btn3">
+          <span class="toggle-slider"></span>
+        </label>
       </div>
 
       <div class="relay-card">
-        <h2>Relay 4</h2>
+        <h2>LED 2</h2>
         <p>Status: <span id="status4">Loading...</span></p>
-        <button id="btn4">Toggle</button>
+        <label class="toggle-switch">
+          <input type="checkbox" id="btn4">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="relay-card">
+        <h2>Water Motor</h2>
+        <p>Status: <span id="status5">Loading...</span></p>
+        <label class="toggle-switch">
+          <input type="checkbox" id="btn5">
+          <span class="toggle-slider"></span>
+        </label>
       </div>
     </div>
 
@@ -199,16 +242,14 @@
   <script>
     // Firebase config
     const firebaseConfig = {
-
-  apiKey: "AIzaSyA2Ji-C1ZeUwRWw2P2DJ9F_ACm_nTCZbRE",
-  authDomain: "home-automation-991dc.firebaseapp.com",
-  databaseURL: "https://home-automation-991dc-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "home-automation-991dc",
-  storageBucket: "home-automation-991dc.firebasestorage.app",
-  messagingSenderId: "770983084419",
-  appId: "1:770983084419:web:4d3200d327fb3c951eb6b6"
-  };
-
+      apiKey: "AIzaSyA2Ji-C1ZeUwRWw2P2DJ9F_ACm_nTCZbRE",
+      authDomain: "home-automation-991dc.firebaseapp.com",
+      databaseURL: "https://home-automation-991dc-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "home-automation-991dc",
+      storageBucket: "home-automation-991dc.firebasestorage.app",
+      messagingSenderId: "770983084419",
+      appId: "1:770983084419:web:4d3200d327fb3c951eb6b6"
+    };
 
     firebase.initializeApp(firebaseConfig);
 
@@ -229,9 +270,7 @@
         return;
       }
 
-      // Check hardcoded credentials first
-      if(email === allowedEmail && password === allowedPassword){
-        // Sign in with Firebase
+      if (email === allowedEmail && password === allowedPassword) {
         firebase.auth().signInWithEmailAndPassword(email, password)
           .then(userCredential => {
             console.log("Signed in as", userCredential.user.email);
@@ -251,10 +290,11 @@
       const db = firebase.database();
 
       const relays = [
-        { id: 1, path: "relay1" },
-        { id: 2, path: "relay2" },
-        { id: 3, path: "relay3" },
-        { id: 4, path: "relay4" },
+        { id: 1, path: "fan1" },
+        { id: 2, path: "fan2" },
+        { id: 3, path: "led1" },
+        { id: 4, path: "led2" },
+        { id: 5, path: "waterMotor" },
       ];
 
       relays.forEach(relay => {
@@ -265,13 +305,11 @@
         relayRef.on("value", (snapshot) => {
           const state = snapshot.val();
           statusText.innerText = state ? "ON" : "OFF";
-          toggleButton.style.backgroundColor = state ? "green" : "blue";
+          toggleButton.checked = state;
         });
 
-        toggleButton.onclick = () => {
-          relayRef.get().then(snap => {
-            relayRef.set(!snap.val());
-          });
+        toggleButton.onchange = () => {
+          relayRef.set(toggleButton.checked);
         };
       });
 
